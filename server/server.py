@@ -23,7 +23,6 @@ from common import (
     VOICE_NAME,
     SEND_SAMPLE_RATE,
     SYSTEM_INSTRUCTION,
-    get_order_status,
 )
 
 # Initialize Google client
