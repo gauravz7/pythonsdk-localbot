@@ -8,26 +8,32 @@ This project contains the user interface for the Multimodal Live API. It has bee
 
 ## Getting Started
 
-1.  **Install Dependencies:**
-    Open a terminal in the `ui-cloned/multimodal-live-api/ui` directory and run the following command to install the required Node.js packages:
+1.  **Install Frontend Dependencies:**
+    Open a terminal in the project directory and run the following command to install the required Node.js packages:
     ```bash
     npm install
     ```
 
-2.  **Start the Backend Server:**
-    Open a new terminal and navigate to the `ui-cloned/multimodal-live-api/ui/server` directory. Run the following command to start the Python WebSocket server:
+2.  **Install Backend Dependencies:**
+    Open a new terminal and navigate to the `server` directory. Run the following command to install the required Python packages:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+3.  **Start the Backend Server:**
+    In the same terminal (inside the `server` directory), run the following command to start the Python WebSocket server:
     ```bash
     python server.py
     ```
 
-3.  **Start the Frontend Server:**
-    In a separate terminal, navigate to the `ui-cloned/multimodal-live-api/ui` directory and run the following command to start the Node.js server:
+4.  **Start the Frontend Server:**
+    In a separate terminal, navigate to the project root directory and run the following command to start the Node.js server:
     ```bash
     npm start
     ```
     This will start an Express server on port 8080, serving the frontend.
 
-4.  **Access the Application:**
+5.  **Access the Application:**
     Open your web browser and navigate to [http://localhost:8080](http://localhost:8080) to use the application.
 
 ## Project Structure
@@ -36,3 +42,17 @@ This project contains the user interface for the Multimodal Live API. It has bee
 -   `server.js`: The main Node.js server file that uses Express to serve the frontend.
 -   `package.json`: Defines the project's dependencies and scripts.
 -   `server/`: Contains the Python WebSocket server files.
+
+## Contributing
+
+1.  **Commit Changes:**
+    After making changes, commit them with a descriptive message:
+    ```bash
+    git commit -am "Your descriptive commit message"
+    ```
+
+2.  **Push to GitHub:**
+    Push your changes to the main branch of the repository:
+    ```bash
+    git push
+    ```
