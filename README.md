@@ -43,6 +43,12 @@ This project contains the user interface for the Multimodal Live API. It has bee
 -   `package.json`: Defines the project's dependencies and scripts.
 -   `server/`: Contains the Python WebSocket server files.
 
+## Features
+
+-   **Full-Screen Chat Interface**: The chat application now runs in a full-screen mode for an immersive experience.
+-   **Voice-Powered Interaction**: Users can interact with the assistant using their voice.
+-   **Session Resumption**: The application remembers your conversation history between connections.
+
 ## Contributing
 
 1.  **Commit Changes:**
