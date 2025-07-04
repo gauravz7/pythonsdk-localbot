@@ -1,6 +1,7 @@
 import asyncio
 import json
 import base64
+import os
 
 # Import Google Generative AI components
 from google import genai
@@ -30,6 +31,27 @@ client = genai.Client(vertexai=True, project=PROJECT_ID, location=LOCATION)
 
 tools = [{'google_search': {}}]
 
+
+# Load previous session handle from a file
+# You must delete the session_handle.json file to start a new session when last session was
+# finished for a while.
+def load_previous_session_handle():
+    try:
+        with open('session_handle.json', 'r') as f:
+            data = json.load(f)
+            print(f"Loaded previous session handle: {data.get('previous_session_handle', None)}")
+            return data.get('previous_session_handle', None)
+    except FileNotFoundError:
+        return None
+
+# Save previous session handle to a file
+def save_previous_session_handle(handle):
+    with open('session_handle.json', 'w') as f:
+        json.dump({'previous_session_handle': handle}, f)
+
+previous_session_handle = load_previous_session_handle()
+
+
 CONFIG = {
     "response_modalities": ["AUDIO"], 
     "tools": tools,
@@ -45,8 +67,13 @@ CONFIG = {
             "prefix_padding_ms": 400,      # More audio padding before speech starts
             "silence_duration_ms": 400,  # Longer silence before considering speech ended
         }
-    }
+    },
+
+    "session_resumption": types.SessionResumptionConfig(
+        handle=previous_session_handle
+    ),
 }
+
 
 class LiveAPIWebSocketServer(BaseWebSocketServer):
     """WebSocket server implementation using Gemini LiveAPI directly."""
@@ -88,12 +115,10 @@ class LiveAPIWebSocketServer(BaseWebSocketServer):
                         data = await audio_queue.get()
 
                         # Send the audio data to Gemini
-                        await session.send_realtime_input(
-                            media={
-                                "data": data,
-                                "mime_type": f"audio/pcm;rate={SEND_SAMPLE_RATE}",
-                            }
-                        )
+                        await session.send(input={
+                            "mime_type": f"audio/pcm;rate={SEND_SAMPLE_RATE}",
+                            "data": data
+                        })
 
                         audio_queue.task_done()
 
@@ -108,12 +133,14 @@ class LiveAPIWebSocketServer(BaseWebSocketServer):
                             if response.session_resumption_update:
                                 update = response.session_resumption_update
                                 if update.resumable and update.new_handle:
-                                    session_id = update.new_handle
-                                    logger.info(f"New SESSION: {session_id}")
+                                    # The handle should be retained and linked to the session.
+                                    previous_session_handle = update.new_handle
+                                    save_previous_session_handle(previous_session_handle)
+                                    logger.info(f"Resumed session update with handle: {previous_session_handle}")
                                     # Send session ID to client
                                     session_id_msg = json.dumps({
                                         "type": "session_id",
-                                        "data": session_id
+                                        "data": previous_session_handle
                                     })
                                     await websocket.send(session_id_msg)
 
