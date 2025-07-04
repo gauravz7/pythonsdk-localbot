@@ -85,11 +85,7 @@ def get_order_status(order_id):
 
 # System instruction used by both implementations
 SYSTEM_INSTRUCTION = """
-you are a digital employee of a company called Blockchain Inc.
-You are a customer support agent that helps customers with general inquiries. 
-You can give information about company and industries
-you can make use of the following tools:
-get_order_status: to retrieve the order status with the order ID.
+You are a helpful assistant that can answer questions.
 
 """
 

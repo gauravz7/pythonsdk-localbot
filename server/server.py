@@ -84,6 +84,9 @@ class LiveAPIWebSocketServer(BaseWebSocketServer):
 
         # Connect to Gemini using LiveAPI
         async with client.aio.live.connect(model=MODEL, config=CONFIG) as session:
+            # Track if we've already handled the initial session setup
+            session_initialized = False
+            
             async with asyncio.TaskGroup() as tg:
                 # Create a queue for audio data from the client
                 audio_queue = asyncio.Queue()
@@ -124,25 +127,32 @@ class LiveAPIWebSocketServer(BaseWebSocketServer):
 
                 # Task to receive and play responses
                 async def receive_and_play():
+                    nonlocal session_initialized
+                    
                     while True:
                         input_transcriptions = []
                         output_transcriptions = []
 
                         async for response in session.receive():
-                            # Get session resumption update if available
+                            # Handle session resumption update - log only on initial connection, but save every time
                             if response.session_resumption_update:
                                 update = response.session_resumption_update
                                 if update.resumable and update.new_handle:
-                                    # The handle should be retained and linked to the session.
-                                    previous_session_handle = update.new_handle
-                                    save_previous_session_handle(previous_session_handle)
-                                    logger.info(f"Resumed session update with handle: {previous_session_handle}")
-                                    # Send session ID to client
-                                    session_id_msg = json.dumps({
-                                        "type": "session_id",
-                                        "data": previous_session_handle
-                                    })
-                                    await websocket.send(session_id_msg)
+                                    # Always save the updated handle
+                                    save_previous_session_handle(update.new_handle)
+                                    
+                                    if not session_initialized:
+                                        logger.info(f"Session established with handle: {update.new_handle}")
+                                        # Send session ID to client
+                                        session_id_msg = json.dumps({
+                                            "type": "session_id",
+                                            "data": update.new_handle
+                                        })
+                                        await websocket.send(session_id_msg)
+                                        session_initialized = True
+                                    else:
+                                        # Print session handle updates after initial connection
+                                        logger.info(f"Session handle updated: {update.new_handle}")
 
                             # Check if connection will be terminated soon
                             if response.go_away is not None:
@@ -177,7 +187,6 @@ class LiveAPIWebSocketServer(BaseWebSocketServer):
                                     "type": "turn_complete"
                                 }))
 
-
                             # Handle transcriptions
                             input_transcription = getattr(response.server_content, "input_transcription", None)
                             if input_transcription and input_transcription.text:
@@ -194,7 +203,6 @@ class LiveAPIWebSocketServer(BaseWebSocketServer):
                                     "type": "text",
                                     "data": output_transcription.text
                                 }))
-
 
                         logger.info(f"Input transcription: {''.join(input_transcriptions)}")
                         logger.info(f"Output transcription: {''.join(output_transcriptions)}")

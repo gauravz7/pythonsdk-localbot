@@ -1,21 +1,24 @@
 import asyncio
 import json
 import base64
+import os
 
-# Import Google ADK components
-from google.adk.agents import Agent, LiveRequestQueue
-from google.adk.runners import Runner
-from google.adk.agents.run_config import RunConfig, StreamingMode
-from google.adk.sessions.in_memory_session_service import InMemorySessionService
+# Import Google Generative AI components
+from google import genai
 from google.genai import types
-from dotenv import load_dotenv
-
-load_dotenv()
+from google.genai.types import (
+    LiveConnectConfig,
+    SpeechConfig,
+    VoiceConfig,
+    PrebuiltVoiceConfig,
+)
 
 # Import common components
 from common import (
     BaseWebSocketServer,
     logger,
+    PROJECT_ID,
+    LOCATION,
     MODEL,
     VOICE_NAME,
     SEND_SAMPLE_RATE,
@@ -23,205 +26,195 @@ from common import (
     get_order_status,
 )
 
+# Initialize Google client
+client = genai.Client(vertexai=True, project=PROJECT_ID, location=LOCATION)
 
-# Function tool for order status
-def order_status_tool(order_id: str):
-    """Get the current status and details of an order.
-
-    Args:
-        order_id: The order ID to look up.
-
-    Returns:
-        Dictionary containing order status details
-    """
-    return get_order_status(order_id)
+tools = [{'google_search': {}}]
 
 
-class ADKWebSocketServer(BaseWebSocketServer):
-    """WebSocket server implementation using Google ADK."""
+# Load previous session handle from a file
+# You must delete the session_handle.json file to start a new session when last session was
+# finished for a while.
+def load_previous_session_handle():
+    try:
+        with open('session_handle.json', 'r') as f:
+            data = json.load(f)
+            print(f"Loaded previous session handle: {data.get('previous_session_handle', None)}")
+            return data.get('previous_session_handle', None)
+    except FileNotFoundError:
+        return None
 
-    def __init__(self, host="0.0.0.0", port=8765):
-        super().__init__(host, port)
+# Save previous session handle to a file
+def save_previous_session_handle(handle):
+    with open('session_handle.json', 'w') as f:
+        json.dump({'previous_session_handle': handle}, f)
 
-        # Initialize ADK components
-        self.agent = Agent(
-            name="customer_service_agent",
-            model=MODEL,
-            instruction=SYSTEM_INSTRUCTION,
-            tools=[order_status_tool],
-        )
+previous_session_handle = load_previous_session_handle()
 
-        # Create session service
-        self.session_service = InMemorySessionService()
+
+CONFIG = {
+    "response_modalities": ["AUDIO"], 
+    "tools": tools,
+    # Audio transcription settings
+    "output_audio_transcription": {},  # Enable transcription of model's audio output
+    "input_audio_transcription": {},   # Enable transcription of user's audio input
+    # Voice Activity Detection (VAD) configuration
+    "realtime_input_config": {
+        "automatic_activity_detection": {
+            "disabled": False,  # Enable automatic VAD
+            "start_of_speech_sensitivity": types.StartSensitivity.START_SENSITIVITY_LOW,  # Less sensitive
+            "end_of_speech_sensitivity": types.EndSensitivity.END_SENSITIVITY_LOW,        # Less sensitive
+            "prefix_padding_ms": 400,      # More audio padding before speech starts
+            "silence_duration_ms": 400,  # Longer silence before considering speech ended
+        }
+    },
+
+    "session_resumption": types.SessionResumptionConfig(
+        handle=previous_session_handle
+    ),
+}
+
+
+class LiveAPIWebSocketServer(BaseWebSocketServer):
+    """WebSocket server implementation using Gemini LiveAPI directly."""
 
     async def process_audio(self, websocket, client_id):
         # Store reference to client
         self.active_clients[client_id] = websocket
 
-        # Create session for this client
-        session = self.session_service.create_session(
-            app_name="audio_assistant",
-            user_id=f"user_{client_id}",
-            session_id=f"session_{client_id}",
-        )
+        # Connect to Gemini using LiveAPI
+        async with client.aio.live.connect(model=MODEL, config=CONFIG) as session:
+            # Track if we've already handled the initial session setup
+            session_initialized = False
+            
+            async with asyncio.TaskGroup() as tg:
+                # Create a queue for audio data from the client
+                audio_queue = asyncio.Queue()
 
-        # Create runner
-        runner = Runner(
-            app_name="audio_assistant",
-            agent=self.agent,
-            session_service=self.session_service,
-        )
+                # Task to process incoming WebSocket messages
+                async def handle_websocket_messages():
+                    async for message in websocket:
+                        try:
+                            data = json.loads(message)
+                            if data.get("type") == "audio":
+                                # Decode base64 audio data
+                                audio_bytes = base64.b64decode(data.get("data", ""))
+                                # Put audio in queue for processing
+                                await audio_queue.put(audio_bytes)
+                            elif data.get("type") == "end":
+                                # Client is done sending audio for this turn
+                                logger.info("Received end signal from client")
+                            elif data.get("type") == "text":
+                                # Handle text messages (not implemented in this simple version)
+                                logger.info(f"Received text: {data.get('data')}")
+                        except json.JSONDecodeError:
+                            logger.error("Invalid JSON message received")
+                        except Exception as e:
+                            logger.error(f"Error processing message: {e}")
 
-        # Create live request queue
-        live_request_queue = LiveRequestQueue()
+                # Task to process and send audio to Gemini
+                async def process_and_send_audio():
+                    while True:
+                        data = await audio_queue.get()
 
-        # Create run config with audio settings
-        run_config = RunConfig(
-            streaming_mode=StreamingMode.BIDI,
-            speech_config=types.SpeechConfig(
-                voice_config=types.VoiceConfig(
-                    prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                        voice_name=VOICE_NAME
-                    )
-                )
-            ),
-            response_modalities=["AUDIO"],
-            output_audio_transcription=types.AudioTranscriptionConfig(),
-            input_audio_transcription=types.AudioTranscriptionConfig(),
-        )
+                        # Send the audio data to Gemini
+                        await session.send(input={
+                            "mime_type": f"audio/pcm;rate={SEND_SAMPLE_RATE}",
+                            "data": data
+                        })
 
-        # Queue for audio data from the client
-        audio_queue = asyncio.Queue()
+                        audio_queue.task_done()
 
-        async with asyncio.TaskGroup() as tg:
-            # Task to process incoming WebSocket messages
-            async def handle_websocket_messages():
-                async for message in websocket:
-                    try:
-                        data = json.loads(message)
-                        if data.get("type") == "audio":
-                            # Decode base64 audio data
-                            audio_bytes = base64.b64decode(data.get("data", ""))
-                            # Put audio in queue for processing
-                            await audio_queue.put(audio_bytes)
-                        elif data.get("type") == "end":
-                            # Client is done sending audio for this turn
-                            logger.info("Received end signal from client")
-                        elif data.get("type") == "text":
-                            # Handle text messages (not implemented in this simple version)
-                            logger.info(f"Received text: {data.get('data')}")
-                    except json.JSONDecodeError:
-                        logger.error("Invalid JSON message received")
-                    except Exception as e:
-                        logger.error(f"Error processing message: {e}")
+                # Task to receive and play responses
+                async def receive_and_play():
+                    nonlocal session_initialized
+                    
+                    while True:
+                        input_transcriptions = []
+                        output_transcriptions = []
 
-            # Task to process and send audio to Gemini
-            async def process_and_send_audio():
-                while True:
-                    data = await audio_queue.get()
+                        async for response in session.receive():
+                            # Handle session resumption update - log only on initial connection, but save every time
+                            if response.session_resumption_update:
+                                update = response.session_resumption_update
+                                if update.resumable and update.new_handle:
+                                    # Always save the updated handle
+                                    save_previous_session_handle(update.new_handle)
+                                    
+                                    # Only log and send to client on initial connection
+                                    if not session_initialized:
+                                        logger.info(f"Session established with handle: {update.new_handle}")
+                                        # Send session ID to client
+                                        session_id_msg = json.dumps({
+                                            "type": "session_id",
+                                            "data": update.new_handle
+                                        })
+                                        await websocket.send(session_id_msg)
+                                        session_initialized = True
 
-                    # Send the audio data to Gemini through ADK's LiveRequestQueue
-                    live_request_queue.send_realtime(
-                        types.Blob(
-                            data=data,
-                            mime_type=f"audio/pcm;rate={SEND_SAMPLE_RATE}",
-                        )
-                    )
+                            # Check if connection will be terminated soon
+                            if response.go_away is not None:
+                                logger.info(f"Session will terminate in: {response.go_away.time_left}")
 
-                    audio_queue.task_done()
+                            server_content = response.server_content
 
-            # Task to receive and process responses
-            async def receive_and_process_responses():
-                # Track user and model outputs between turn completion events
-                input_texts = []
-                output_texts = []
+                            # Handle interruption
+                            if (hasattr(server_content, "interrupted") and server_content.interrupted):
+                                logger.info("🤐 INTERRUPTION DETECTED")
+                                # Just notify the client - no need to handle audio on server side
+                                await websocket.send(json.dumps({
+                                    "type": "interrupted",
+                                    "data": "Response interrupted by user input"
+                                }))
 
-                # Flag to track if we've seen an interruption in the current turn
-                interrupted = False
+                            # Process model response
+                            if server_content and server_content.model_turn:
+                                for part in server_content.model_turn.parts:
+                                    if part.inline_data:
+                                        # Send audio to client only (don't play locally)
+                                        b64_audio = base64.b64encode(part.inline_data.data).decode('utf-8')
+                                        await websocket.send(json.dumps({
+                                            "type": "audio",
+                                            "data": b64_audio
+                                        }))
 
-                # Process responses from the agent
-                async for event in runner.run_live(
-                    session=session,
-                    live_request_queue=live_request_queue,
-                    run_config=run_config,
-                ):
+                            # Handle turn completion
+                            if server_content and server_content.turn_complete:
+                                logger.info("✅ Gemini done talking")
+                                await websocket.send(json.dumps({
+                                    "type": "turn_complete"
+                                }))
 
-                    # Check for turn completion or interruption using string matching
-                    # This is a fallback approach until a proper API exists
-                    event_str = str(event)
-                    #print()
+                            # Handle transcriptions
+                            input_transcription = getattr(response.server_content, "input_transcription", None)
+                            if input_transcription and input_transcription.text:
+                                input_transcriptions.append(input_transcription.text)
+                                await websocket.send(json.dumps({
+                                    "type": "text",
+                                    "data": input_transcription.text
+                                }))
+                            output_transcription = getattr(response.server_content, "output_transcription", None)
+                            if output_transcription and output_transcription.text:
+                                output_transcriptions.append(output_transcription.text)
+                                # Send text to client
+                                await websocket.send(json.dumps({
+                                    "type": "text",
+                                    "data": output_transcription.text
+                                }))
 
-                    # Handle audio content
-                    if event.content and event.content.parts:
-                        for part in event.content.parts:
-                            # Process audio content
-                            if hasattr(part, "inline_data") and part.inline_data:
-                                b64_audio = base64.b64encode(part.inline_data.data).decode("utf-8")
-                                await websocket.send(json.dumps({"type": "audio", "data": b64_audio}))
+                        logger.info(f"Input transcription: {''.join(input_transcriptions)}")
+                        logger.info(f"Output transcription: {''.join(output_transcriptions)}")
+                        
 
-                            # Process text content
-                            if hasattr(part, "text") and part.text:
-                                # Check if this is user or model text based on content role
-                                if hasattr(event.content, "role") and event.content.role == "user":
-                                    # User text shouldn't be sent to the client
-                                    input_texts.append(part.text)
-                                else:
-                                    # From the logs, we can see the duplicated text issue happens because
-                                    # we get streaming chunks with "partial=True" followed by a final consolidated
-                                    # response with "partial=None" containing the complete text
-
-                                    # Check in the event string for the partial flag
-                                    # Only process messages with "partial=True"
-                                    if "partial=True" in event_str:
-                                        await websocket.send(json.dumps({"type": "text", "data": part.text}))
-                                        output_texts.append(part.text)
-                                    # Skip messages with "partial=None" to avoid duplication
-
-
-
-                    # Check for interruption
-                    if event.interrupted  and not interrupted:
-                        logger.info("🤐 INTERRUPTION DETECTED")
-                        await websocket.send(json.dumps({
-                            "type": "interrupted",
-                            "data": "Response interrupted by user input"
-                        }))
-                        interrupted = True
-
-                    # Check for turn completion
-                    if event.turn_complete:
-                        # Only send turn_complete if there was no interruption
-                        if not interrupted:
-                            logger.info("✅ Gemini done talking")
-                            await websocket.send(json.dumps({"type": "turn_complete"}))
-
-                        # Log collected transcriptions for debugging
-                        if input_texts:
-                            # Get unique texts to prevent duplication
-                            unique_texts = list(dict.fromkeys(input_texts))
-                            logger.info(f"Input transcription: {' '.join(unique_texts)}")
-
-                        if output_texts:
-                            # Get unique texts to prevent duplication
-                            unique_texts = list(dict.fromkeys(output_texts))
-                            logger.info(f"Output transcription: {' '.join(unique_texts)}")
-
-                        # Reset for next turn
-                        input_texts = []
-                        output_texts = []
-                        interrupted = False
-
-            # Start all tasks
-            tg.create_task(handle_websocket_messages())
-            tg.create_task(process_and_send_audio())
-            tg.create_task(receive_and_process_responses())
-
+                # Start all tasks
+                tg.create_task(handle_websocket_messages())
+                tg.create_task(process_and_send_audio())
+                tg.create_task(receive_and_play())
 
 async def main():
     """Main function to start the server"""
-    server = ADKWebSocketServer()
+    server = LiveAPIWebSocketServer()
     await server.start()
-
 
 if __name__ == "__main__":
     try:

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>hemmafy - Home Furnishings</title>
+    <title>VOICEBOT DEMO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -84,13 +84,13 @@
 
         .chatbox {
             position: fixed;
-            bottom: 1.5rem; /* 24px */
-            right: 1.5rem; /* 24px */
-            width: 360px;
-            height: 600px;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
             /* Uses .bg-chatbox-svenska-blue */
-            border-radius: 0.75rem; /* rounded-xl */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
             display: flex;
             flex-direction: column;
             color: white;
@@ -254,7 +254,7 @@
         <div class="chatbox-body" id="chat-messages">
             <!-- Chat messages will be added here -->
             <div class="chat-message assistant-message">
-                Hello! I'm your hemmafy virtual assistant. How can I help you today?
+                Hello! I'm your virtual assistant. How can I help you today?
             </div>
         </div>
 
@@ -269,29 +269,14 @@
         </div>
 
         <div class="chatbox-footer border-chatbox-svenska-accent">
-            <button id="cameraButton" class="chat-control-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-            </button>
             <div id="mic-button-container" class="mic-button">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                 </svg>
             </div>
-            <button id="endCallButton" class="chat-control-btn end-call">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 002.828 0L19 12M3 12l6.414-6.414a2 2 0 012.828 0L19 12" />
-                </svg>
-            </button>
         </div>
     </div>
 
-    <button id="openChatButton" class="fixed bottom-6 right-6 bg-svenska-blue text-white p-4 rounded-full shadow-lg hidden hover:bg-svenska-blue-darker" title="Open Chat">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.74 8.74 0 01-4.246-1.122L2.999 17.68a.5.5 0 00-.5-.502L2.57 14.28A7.96 7.96 0 012 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zm-4 0H9v2h2V9z" clip-rule="evenodd" />
-        </svg>
-    </button>
 
     <!-- Audio client script -->
     <script src="audio-client.js"></script>
@@ -304,9 +289,7 @@
         // Script to toggle chatbox visibility
         const chatbox = document.getElementById('chatbox');
         const closeChatboxButton = document.getElementById('closeChatbox');
-        const openChatButton = document.getElementById('openChatButton');
         const micButton = document.getElementById('mic-button-container');
-        const endCallButton = document.getElementById('endCallButton');
         const chatMessages = document.getElementById('chat-messages');
         const audioIndicator = document.getElementById('audio-indicator');
 
@@ -336,15 +319,6 @@
             });
         }
 
-        if (openChatButton) {
-            openChatButton.addEventListener('click', () => {
-                if (chatbox) chatbox.style.display = 'flex';
-                if (openChatButton) openChatButton.style.display = 'none';
-
-                // Connect to the server
-                initializeAudioClient();
-            });
-        }
 
         // Microphone button handler
         micButton.addEventListener('click', () => {
@@ -355,19 +329,6 @@
             }
         });
 
-        // End call button handler
-        endCallButton.addEventListener('click', () => {
-            if (isRecording) {
-                stopRecording();
-            }
-
-            // Add a message
-            addMessage("Call ended. How else can I help you?", "assistant");
-
-            // Reconnect the audio client
-            audioClient.close();
-            initializeAudioClient();
-        });
 
         // Initialize audio client
         async function initializeAudioClient() {
