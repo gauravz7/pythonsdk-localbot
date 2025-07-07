@@ -64,7 +64,7 @@ CONFIG = {
             "start_of_speech_sensitivity": types.StartSensitivity.START_SENSITIVITY_LOW,  # Less sensitive
             "end_of_speech_sensitivity": types.EndSensitivity.END_SENSITIVITY_LOW,        # Less sensitive
             "prefix_padding_ms": 400,      # More audio padding before speech starts
-            "silence_duration_ms": 400,  # Longer silence before considering speech ended
+            "silence_duration_ms": 800,  # Longer silence before considering speech ended
         },
         #"denoiser_config": {
         #    "denoise_audio": True  # Enable audio denoising
