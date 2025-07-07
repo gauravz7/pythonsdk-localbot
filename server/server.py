@@ -194,7 +194,7 @@ class LiveAPIWebSocketServer(BaseWebSocketServer):
                             if input_transcription and input_transcription.text:
                                 input_transcriptions.append(input_transcription.text)
                                 await websocket.send(json.dumps({
-                                    "type": "text",
+                                    "type": "itext",
                                     "data": input_transcription.text
                                 }))
                             output_transcription = getattr(response.server_content, "output_transcription", None)
@@ -202,7 +202,7 @@ class LiveAPIWebSocketServer(BaseWebSocketServer):
                                 output_transcriptions.append(output_transcription.text)
                                 # Send text to client
                                 await websocket.send(json.dumps({
-                                    "type": "text",
+                                    "type": "otext",
                                     "data": output_transcription.text
                                 }))
 
