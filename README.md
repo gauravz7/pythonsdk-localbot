@@ -1,53 +1,93 @@
 # Multimodal Live API UI
 
-This project contains the user interface for the Multimodal Live API. It has been converted to a Node.js application that serves the frontend and handles WebSocket connections.
+This project contains the user interface for the Multimodal Live API. It features a Python backend with two server options and a vanilla HTML/CSS/JS frontend.
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) (which includes npm) must be installed on your system.
+-   Python 3.9+
+-   An authenticated Google Cloud SDK (`gcloud auth application-default login`)
 
 ## Getting Started
 
-1.  **Install Frontend Dependencies:**
-    Open a terminal in the project directory and run the following command to install the required Node.js packages:
+First, clone the repository and install the required Python packages.
+
+1.  **Clone the repository:**
     ```bash
-    npm install
+    git clone https://github.com/gauravz7/pythonsdk-localbot.git
+    cd pythonsdk-localbot
     ```
 
-2.  **Install Backend Dependencies:**
-    Open a new terminal and navigate to the `server` directory. Run the following command to install the required Python packages:
+2.  **Create and activate a Python virtual environment:**
     ```bash
+    python -m venv venv
+    source venv/bin/activate
+    # On Windows: venv\Scripts\activate
+    ```
+
+3.  **Install Dependencies:**
+    Navigate to the `server` directory and install the required packages:
+    ```bash
+    cd server
     pip install -r requirements.txt
+    cd .. 
     ```
 
-3.  **Start the Backend Server:**
-    In the same terminal (inside the `server` directory), run the following command to start the Python WebSocket server:
+4.  **Configure Google Cloud:**
+    Open `server/common.py` and set your `PROJECT_ID` and `LOCATION`.
+
+---
+
+### Option 1: Run with FastAPI Server (Recommended)
+
+This method uses a single command to run the FastAPI server, which handles both the WebSocket connection and serves the frontend client.
+
+1.  **Start the Server:**
+    From the project root directory, run the following command:
     ```bash
-    python server.py
+    python server/server_fastapi.py
     ```
+    The server will start on `0.0.0.0:8765`.
 
-4.  **Start the Frontend Server:**
-    In a separate terminal, navigate to the project root directory and run the following command to start the Node.js server:
+2.  **Access the Application:**
+    Open your web browser and navigate to [http://localhost:8765](http://localhost:8765). The client is configured to connect to the correct WebSocket endpoint out of the box.
+
+---
+
+### Option 2: Run with Vanilla Python WebSocket Server
+
+This method runs the original, standalone WebSocket server. You will need to serve the frontend files using a separate process and modify the client's WebSocket URL.
+
+1.  **Start the Backend Server:**
+    From the project root directory, run the following command:
     ```bash
-    npm start
+    python server/server.py
     ```
-    This will start an Express server on port 8080, serving the frontend.
+    The WebSocket server will start and listen on `0.0.0.0:8765`.
 
-5.  **Access the Application:**
-    Open your web browser and navigate to [http://localhost:8080](http://localhost:8080) to use the application.
+2.  **Modify the Client:**
+    Open `client/index.html` and change the WebSocket connection URL. Find this line:
+    ```javascript
+    const audioClient = new AudioClient('ws://localhost:8765/ws');
+    ```
+    And change it to:
+    ```javascript
+    const audioClient = new AudioClient('ws://localhost:8765');
+    ```
 
-## Project Structure
+3.  **Serve the Frontend:**
+    You need to serve the `client` directory using a local web server. A simple way is to use Python's built-in HTTP server. In a **new terminal**, run the following command from the project root directory:
+    ```bash
+    python -m http.server 8080 --directory client
+    ```
 
--   `client/`: Contains the frontend files (`index.html`, `audio-client.js`, etc.).
--   `server.js`: The main Node.js server file that uses Express to serve the frontend.
--   `package.json`: Defines the project's dependencies and scripts.
--   `server/`: Contains the Python WebSocket server files.
+4.  **Access the Application:**
+    Open your web browser and navigate to [http://localhost:8080](http://localhost:8080).
 
 ## System Architecture
 
 ![Architecture Diagram](Arch.png)
 
-### Frontend Javascript + NodeJS
+### Frontend Javascript
 - **Initialization**: The main application script instantiates audio-client.js.
 - **Connection**: The AudioClient establishes a persistent, two-way connection to the backend using the WebSocket API.
 - **Recording (Capture on the Audio Thread)**:
@@ -85,43 +125,6 @@ The stack consists of Python leveraging asyncio for non-blocking I/O, the websoc
 - **Asynchronous Audio Buffer**: A producer-consumer pattern using asyncio.Queue decouples client data from API streaming. The WebSocket handler encodes audio and enqueues bytes while the processor dequeues for API transmission
 - **Session Persistence**: Simple file-based persistence saves session handles from session_resumption_update responses to JSON files. This enables conversation continuity after disconnections but requires distributed storage (Redis) for production scaling. Right now the basic implementation takes only the saved session.
 
-### Setup and Deployment
-**Prerequisites**
-- Authenticated Google Cloud SDK (gcloud auth application-default login).
-- Python 3.9+. Create and activate a Python virtual environment:
-  ```bash
-  python -m venv venv
-  source venv/bin/activate
-  # On Windows: venv\Scripts\activate
-  ```
-- Clone the repository and cd into the project directory.
-
-**Install dependencies from requirements.txt:**
-```
-google-generativeai
-google-cloud-aiplatform
-websockets
-```
-```bash
-pip install -r requirements.txt
-```
-**Configuration**
-- **common.py**: Set `PROJECT_ID` and `LOCATION` to match your Google Cloud configuration.
-- **live_api_server.py**: The `CONFIG` dictionary contains tunable parameters for the Gemini API session, including VAD sensitivity, which can be adjusted to optimize for different acoustic environments or use cases.
-
-**Execution**
-Launch the server using the Python interpreter:
-```bash
-python server.py
-```
-The server will bind to 0.0.0.0:8765 and begin listening for connections.
-
-## Features
-
--   **Full-Screen Chat Interface**: The chat application now runs in a full-screen mode for an immersive experience.
--   **Voice-Powered Interaction**: Users can interact with the assistant using their voice.
--   **Session Resumption**: The application remembers your conversation history between connections.
-
 ## Contributing
 
 1.  **Commit Changes:**
@@ -134,4 +137,3 @@ The server will bind to 0.0.0.0:8765 and begin listening for connections.
     Push your changes to the main branch of the repository:
     ```bash
     git push
-    ```
