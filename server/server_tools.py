@@ -2,8 +2,15 @@ import asyncio
 import json
 import base64
 import os
+import time
+
+# Record program start time
+PROGRAM_START_TIME = time.time()
+print(f"🚀 PROGRAM STARTED at {PROGRAM_START_TIME:.3f}")
 
 # Import Google Generative AI components
+print("🔧 Initializing Google Generative AI client...")
+client_init_start = time.time()
 from google import genai
 from google.genai import types
 from google.genai.types import (
@@ -27,7 +34,8 @@ from common import (
 
 # Initialize Google client
 client = genai.Client(vertexai=True, project=PROJECT_ID, location=LOCATION)
-
+client_init_time = (time.time() - client_init_start) * 1000
+print(f"✅ Google client initialized in {client_init_time:.2f}ms")
 
 #model = "gemini-2.5-flash-preview-native-audio-dialog"
 
@@ -67,26 +75,36 @@ pause_for_10_seconds = {
 # Backend dummy functions that actually execute
 async def execute_turn_on_lights():
     """Backend function to turn on lights"""
+    tool_start = time.time()
     print("----- Turned on Successfull")
+    execution_time = (time.time() - tool_start) * 1000
+    print(f"💡 Light control executed in {execution_time:.2f}ms")
     return {"result": "Lights turned on successfully", "status": "on"}
 
 async def execute_turn_off_lights():
     """Backend function to turn off lights"""
+    tool_start = time.time()
     print("Turned off Successfull -----")
+    execution_time = (time.time() - tool_start) * 1000
+    print(f"💡 Light control executed in {execution_time:.2f}ms")
     return {"result": "Lights turned off successfully", "status": "off"}
 
 async def execute_get_weather(location="Unknown"):
     """Backend function to get weather"""
+    tool_start = time.time()
     print(f"Fetching weather for: {location}")
     import random
     temperature = random.randint(60, 85)
     conditions = random.choice(["sunny", "cloudy", "partly cloudy", "rainy"])
     result = f"Current weather in {location}: {temperature}°F, {conditions}"
+    execution_time = (time.time() - tool_start) * 1000
+    print(f"🌤️ Weather API executed in {execution_time:.2f}ms")
     print(f"Weather result: {result}")
     return {"result": result, "temperature": temperature, "conditions": conditions}
 
 async def execute_pause():
     """Backend function to simulate a slow API call that takes 10 seconds"""
+    tool_start = time.time()
     print("🌐 Making API call to external service...")
     print("📡 Connecting to slow-response-api.example.com...")
     
@@ -101,6 +119,8 @@ async def execute_pause():
     print("📊 Analyzing response data...")
     
     await asyncio.sleep(2)
+    execution_time = (time.time() - tool_start) * 1000
+    print(f"🐌 Slow API call executed in {execution_time:.2f}ms")
     print("✅ API call completed successfully!")
     
     return {
@@ -109,7 +129,7 @@ async def execute_pause():
         "api_endpoint": "slow-response-api.example.com",
         "status": "success",
         "data": {
-            "processing_time": "10.2 seconds",
+            "processing_time": f"{execution_time:.1f}ms",
             "records_processed": 15420,
             "cache_status": "miss"
         }
@@ -127,8 +147,6 @@ tools = [
 ]
 
 # Load previous session handle from a file
-# You must delete the session_handle.json file to start a new session when last session was
-# finished for a while.
 def load_previous_session_handle():
     try:
         with open('session_handle.json', 'r') as f:
@@ -144,7 +162,6 @@ def save_previous_session_handle(handle):
         json.dump({'previous_session_handle': handle}, f)
 
 previous_session_handle = load_previous_session_handle()
-
 
 CONFIG = {
     "response_modalities": ["AUDIO"], 
@@ -175,9 +192,14 @@ class LiveAPIWebSocketServer(BaseWebSocketServer):
     async def handle_tool_calls(self, response):
         """Handle tool calls from the Gemini model - based on reference implementation"""
         if response.tool_call:
+            tool_call_start = time.time()
             function_responses = []
+            
+            print(f"\n🔧 Processing {len(response.tool_call.function_calls)} tool call(s)")
+            
             for fc in response.tool_call.function_calls:
-                print(f"\n🔧 Executing tool: {fc.name}")
+                func_start = time.time()
+                print(f"🛠️ Executing tool: {fc.name}")
                 
                 # Execute actual backend functions for each tool call
                 if fc.name == "turn_on_the_lights":
@@ -198,18 +220,34 @@ class LiveAPIWebSocketServer(BaseWebSocketServer):
                     print(f"Unknown function: {fc.name}")
                     response_data = {"result": "Function executed successfully"}
                 
+                func_time = (time.time() - func_start) * 1000
+                print(f"✅ Tool {fc.name} completed in {func_time:.2f}ms")
+                
                 function_response = types.FunctionResponse(
                     id=fc.id,
                     name=fc.name,
                     response=response_data
                 )
                 function_responses.append(function_response)
-                print(f"✅ Tool {fc.name} completed")
 
             # Send tool responses back to the session
             await self.session.send_tool_response(function_responses=function_responses)
+            
+            total_tool_time = (time.time() - tool_call_start) * 1000
+            print(f"🔧 All tool calls completed in {total_tool_time:.2f}ms")
 
     async def process_audio(self, websocket, client_id):
+        # Calculate and display startup metrics on first connection
+        connection_time = time.time()
+        startup_time = (connection_time - PROGRAM_START_TIME) * 1000
+        print(f"🔌 WEBSOCKET READY! Total startup time: {startup_time:.2f}ms")
+        
+        # TTFT tracking variables
+        last_audio_time = None
+        turn_start_time = None
+        first_token_received = False
+        turn_count = 0
+        
         # Store reference to client
         self.active_clients[client_id] = websocket
 
@@ -227,17 +265,28 @@ class LiveAPIWebSocketServer(BaseWebSocketServer):
 
                 # Task to process incoming WebSocket messages
                 async def handle_websocket_messages():
+                    nonlocal last_audio_time, turn_start_time, first_token_received, turn_count
+                    
                     async for message in websocket:
                         try:
                             data = json.loads(message)
                             if data.get("type") == "audio":
+                                # Update last audio time when we receive audio from user
+                                last_audio_time = time.time()
+                                
                                 # Decode base64 audio data
                                 audio_bytes = base64.b64decode(data.get("data", ""))
                                 # Put audio in queue for processing
                                 await audio_queue.put(audio_bytes)
                             elif data.get("type") == "end":
                                 # Client is done sending audio for this turn
+                                print(f"📨 RECEIVED END SIGNAL FROM CLIENT")
                                 logger.info("Received end signal from client")
+                                # Mark the start time for TTFT measurement
+                                if not turn_start_time:  # Only set if not already set
+                                    turn_start_time = time.time()
+                                    first_token_received = False
+                                    print(f"🎤 USER FINISHED SPEAKING (END SIGNAL) - TTFT timer started at {turn_start_time:.3f}")
                             elif data.get("type") == "text":
                                 # Handle text messages (not implemented in this simple version)
                                 logger.info(f"Received text: {data.get('data')}")
@@ -261,7 +310,7 @@ class LiveAPIWebSocketServer(BaseWebSocketServer):
 
                 # Task to receive and play responses
                 async def receive_and_play():
-                    nonlocal session_initialized
+                    nonlocal session_initialized, turn_start_time, first_token_received, last_audio_time, turn_count
                     
                     while True:
                         input_transcriptions = []
@@ -314,11 +363,20 @@ class LiveAPIWebSocketServer(BaseWebSocketServer):
                                 if response.server_content.output_transcription:
                                     transcript = response.server_content.output_transcription.text
                                     if transcript and transcript.strip():  # Only print non-empty transcripts
+                                        print(f"📝 Received text transcription: '{transcript[:50]}...'")
                                         logger.info(f"🎤 Model said: {transcript}")
                                         output_transcriptions.append(transcript)
+                                        
+                                        # Calculate TTFT for text if this is the first response and we haven't received audio yet
+                                        if turn_start_time and not first_token_received:
+                                            ttft = (time.time() - turn_start_time) * 1000  # Convert to milliseconds
+                                            print(f"📝 TURN {turn_count} - TIME TO FIRST TEXT TOKEN: {ttft:.2f}ms")
+                                            logger.info(f"📝 Time to First Text Token: {ttft:.2f}ms")
+                                            first_token_received = True
+                                        
                                         # Send text to client
                                         await websocket.send(json.dumps({
-                                            "type": "text",
+                                            "type": "otext",
                                             "data": transcript
                                         }))
                                 
@@ -326,15 +384,31 @@ class LiveAPIWebSocketServer(BaseWebSocketServer):
                                 if response.server_content.input_transcription:
                                     transcript = response.server_content.input_transcription.text
                                     if transcript and transcript.strip():  # Only print non-empty transcripts
+                                        print(f"👤 User said: {transcript}")
                                         logger.info(f"🗣️  You said: {transcript}")
                                         input_transcriptions.append(transcript)
+                                        
+                                        # When we get input transcription, this means user just finished speaking
+                                        # Start TTFT timer if not already started
+                                        if not turn_start_time and not first_token_received:
+                                            turn_start_time = time.time()
+                                            turn_count += 1
+                                            print(f"🎤 TURN {turn_count}: User finished speaking (VAD detected) - TTFT timer started at {turn_start_time:.3f}")
+                                        
                                         await websocket.send(json.dumps({
-                                            "type": "text",
+                                            "type": "itext",
                                             "data": transcript
                                         }))
 
                             # Handle audio data (like reference code)
                             if data := response.data:
+                                # Calculate TTFT if this is the first token
+                                if turn_start_time and not first_token_received:
+                                    ttft = (time.time() - turn_start_time) * 1000  # Convert to milliseconds
+                                    print(f"⚡ TURN {turn_count} - TIME TO FIRST AUDIO TOKEN: {ttft:.2f}ms")
+                                    logger.info(f"⚡ Time to First Token: {ttft:.2f}ms")
+                                    first_token_received = True
+                                
                                 # Send audio to client only (don't play locally)
                                 b64_audio = base64.b64encode(data).decode('utf-8')
                                 await websocket.send(json.dumps({
@@ -347,7 +421,16 @@ class LiveAPIWebSocketServer(BaseWebSocketServer):
 
                             # Handle turn completion
                             if server_content and server_content.turn_complete:
+                                if turn_start_time and first_token_received:
+                                    total_turn_time = (time.time() - turn_start_time) * 1000
+                                    print(f"✅ TURN {turn_count} COMPLETE - Total response time: {total_turn_time:.2f}ms")
+                                else:
+                                    print(f"✅ TURN {turn_count} COMPLETE - No timing data")
+                                
                                 logger.info("✅ Gemini done talking")
+                                # Reset TTFT tracking for next turn
+                                turn_start_time = None
+                                first_token_received = False
                                 await websocket.send(json.dumps({
                                     "type": "turn_complete"
                                 }))
@@ -363,6 +446,20 @@ class LiveAPIWebSocketServer(BaseWebSocketServer):
 
 async def main():
     """Main function to start the server"""
+    # Calculate time to reach main execution
+    main_start_time = (time.time() - PROGRAM_START_TIME) * 1000
+    print(f"⏰ Reached main() in {main_start_time:.2f}ms")
+    
+    print("🚀 Starting WebSocket server with tools...")
+    print("🛠️ Available tools:")
+    print("  - turn_on_the_lights")
+    print("  - turn_off_the_lights") 
+    print("  - get_weather")
+    print("  - pause_for_10_seconds")
+    print("  - google_search")
+    
+    server_start_time = time.time()
+    
     server = LiveAPIWebSocketServer()
     await server.start()
 
