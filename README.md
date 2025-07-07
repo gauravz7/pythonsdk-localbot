@@ -1,13 +1,16 @@
 # Multimodal Live API UI
 
-This project contains the user interface for the Multimodal Live API. It features a Python backend with two server options and a vanilla HTML/CSS/JS frontend.
+This project contains the user interface for the Multimodal Live API. It features a Python backend with two server options and a Node.js/Express frontend.
 
 ## Prerequisites
 
+-   Node.js (which includes npm)
 -   Python 3.9+
 -   An authenticated Google Cloud SDK (`gcloud auth application-default login`)
 
 ## Getting Started
+
+### 1. Backend Setup
 
 First, clone the repository and install the required Python packages.
 
@@ -29,7 +32,7 @@ First, clone the repository and install the required Python packages.
     ```bash
     cd server
     pip install -r requirements.txt
-    cd .. 
+    cd ..
     ```
 
 4.  **Configure Google Cloud:**
@@ -37,7 +40,7 @@ First, clone the repository and install the required Python packages.
 
 ---
 
-### Option 1: Run with FastAPI Server (Recommended)
+### Backend Option 1: Run with FastAPI Server (Recommended)
 
 This method uses a single command to run the FastAPI server, which handles both the WebSocket connection and serves the frontend client.
 
@@ -47,13 +50,9 @@ This method uses a single command to run the FastAPI server, which handles both 
     python server/server_fastapi.py
     ```
     The server will start on `0.0.0.0:8765`.
-
-2.  **Access the Application:**
-    Open your web browser and navigate to [http://localhost:8765](http://localhost:8765). The client is configured to connect to the correct WebSocket endpoint out of the box.
-
 ---
 
-### Option 2: Run with Vanilla Python WebSocket Server
+### Backend Option 2: Run with Vanilla Python WebSocket Server
 
 This method runs the original, standalone WebSocket server. You will need to serve the frontend files using a separate process and modify the client's WebSocket URL.
 
@@ -74,20 +73,32 @@ This method runs the original, standalone WebSocket server. You will need to ser
     const audioClient = new AudioClient('ws://localhost:8765');
     ```
 
-3.  **Serve the Frontend:**
-    You need to serve the `client` directory using a local web server. A simple way is to use Python's built-in HTTP server. In a **new terminal**, run the following command from the project root directory:
+
+### 2. Frontend Setup
+
+1.  **Navigate to the client directory:**
     ```bash
-    python -m http.server 8080 --directory client
+    cd client
     ```
 
-4.  **Access the Application:**
-    Open your web browser and navigate to [http://localhost:8080](http://localhost:8080).
+2.  **Install Frontend Dependencies:**
+    ```bash
+    npm install
+    ```
+
+3.  **Start the Frontend Development Server:**
+    This command starts the frontend and watches for changes.
+    ```bash
+    npm run dev
+    ```
+    The frontend will be available at [http://localhost:8080](http://localhost:8080).
+
 
 ## System Architecture
 
 ![Architecture Diagram](Arch.png)
 
-### Frontend Javascript
+### Frontend Javascript + NodeJS
 - **Initialization**: The main application script instantiates audio-client.js.
 - **Connection**: The AudioClient establishes a persistent, two-way connection to the backend using the WebSocket API.
 - **Recording (Capture on the Audio Thread)**:
