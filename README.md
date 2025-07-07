@@ -52,7 +52,7 @@ This method uses a single command to run the FastAPI server, which handles both 
     The server will start on `0.0.0.0:8765`.
 ---
 
-### Backend Option 2: Run with Vanilla Python WebSocket Server
+### Backend Option 2A: Run with Vanilla Python WebSocket Server
 
 This method runs the original, standalone WebSocket server. You will need to serve the frontend files using a separate process and modify the client's WebSocket URL.
 
@@ -63,7 +63,7 @@ This method runs the original, standalone WebSocket server. You will need to ser
     ```
     The WebSocket server will start and listen on `0.0.0.0:8765`.
 
-2.  **Modify the Client:**
+2.  ** Optional - Modify the Client:**
     Open `client/index.html` and change the WebSocket connection URL. Find this line:
     ```javascript
     const audioClient = new AudioClient('ws://localhost:8765/ws');
@@ -73,6 +73,22 @@ This method runs the original, standalone WebSocket server. You will need to ser
     const audioClient = new AudioClient('ws://localhost:8765');
     ```
 
+
+---
+
+### Backend Option 2B: Run with Multi-Tool Server
+
+This server extends the vanilla WebSocket server with tool-calling capabilities, allowing the model to use pre-defined functions like controlling lights or fetching weather.
+
+1.  **Start the Backend Server:**
+    From the project root directory, run the following command:
+    ```bash
+    python server/server_tools.py
+    ```
+    The WebSocket server will start and listen on `0.0.0.0:8765`.
+
+2.  **Client Setup:**
+    Follow the same client modification steps as in **Option 2A** to change the WebSocket URL.
 
 ### 2. Frontend Setup
 
