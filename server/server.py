@@ -66,9 +66,9 @@ CONFIG = {
             "prefix_padding_ms": 400,      # More audio padding before speech starts
             "silence_duration_ms": 400,  # Longer silence before considering speech ended
         },
-        "denoiser_config": {
-            "denoise_audio": True  # Enable audio denoising
-        },
+        #"denoiser_config": {
+        #    "denoise_audio": True  # Enable audio denoising
+        # },
     },
 
     "session_resumption": types.SessionResumptionConfig(
