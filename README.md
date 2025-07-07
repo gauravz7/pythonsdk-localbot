@@ -1,4 +1,4 @@
-# Multimodal Live API UI
+# Gemini Multimodal Live API - Starter Code
 
 This project contains the user interface for the Multimodal Live API. It features a Python backend with two server options and a Node.js/Express frontend.
 
