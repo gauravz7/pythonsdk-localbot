@@ -14,6 +14,8 @@ logger = logging.getLogger(__name__)
 PROJECT_ID = "cloud-llm-preview1"
 LOCATION = "us-central1"
 MODEL = 'gemini-live-2.5-flash'
+#MODEL = 'gemini-live-2.5-flash-preview-native-audio'
+
 VOICE_NAME = "Puck"
 
 # Audio sample rates for input/output

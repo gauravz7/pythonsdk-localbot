@@ -3,7 +3,7 @@
  */
 
 class AudioClient {
-    constructor(serverUrl = 'ws://localhost:8080') {
+    constructor(serverUrl = 'ws://localhost:8080/') {
         this.serverUrl = serverUrl;
         this.ws = null;
         this.recorder = null;
@@ -113,10 +113,16 @@ class AudioClient {
                             this.onAudioReceived(audioData);
                             await this.playAudio(audioData);
                         }
-                        else if (message.type === 'text') {
-                            // Handle receiving text from server
-                            this.onTextReceived(message.data);
+                        else if (message.type === 'itext') {
+                            // Handle receiving input text from server
+                            this.onTextReceived(message.data, 'user');
                         }
+
+                        else if (message.type === 'otext') {
+                            // Handle receiving output text from server
+                            this.onTextReceived(message.data, 'assistant');
+                        }
+
                         else if (message.type === 'turn_complete') {
                             // Model is done speaking
                             this.isModelSpeaking = false;

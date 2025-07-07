@@ -3,208 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOICEBOT DEMO</title>
+    <title>Voice Bot</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8f9fa; /* Light gray background for the page */
-        }
-        .bg-svenska-blue { background-color: #0051BA; } /* Primary Blue */
-        .text-svenska-blue { color: #0051BA; }
-        .border-svenska-blue { border-color: #0051BA; }
-        .hover\:bg-svenska-blue-darker:hover { background-color: #003A8C; } /* Darker shade for hover */
-        .focus\:ring-svenska-blue:focus { --tw-ring-color: #0051BA; }
-        .focus\:border-svenska-blue:focus { border-color: #0051BA; }
-
-        .bg-svenska-yellow { background-color: #FFDA1A; } /* Primary Yellow */
-        .text-svenska-yellow { color: #FFDA1A; }
-        .border-svenska-yellow { border-color: #FFDA1A; }
-        .hover\:bg-svenska-yellow-darker:hover { background-color: #FBCB0A; } /* Darker shade for hover */
-
-        /* Chatbox specific dark blue */
-        .bg-chatbox-svenska-blue { background-color: #002F6C; } /* A darker variant of the blue for chatbox */
-        .border-chatbox-svenska-accent { border-color: #0051BA; } /* Primary blue for chatbox accents */
-
-
-        .top-bar {
-            background-color: #FFFFFF; /* White top bar */
-            border-bottom: 1px solid #E5E7EB; /* Light gray border */
-        }
-        .nav-link {
-            color: #4B5563; /* Gray text for nav links */
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem; /* rounded-md */
-            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-        }
-        .nav-link:hover {
-            background-color: #F3F4F6; /* Lighter gray on hover */
-            color: #1F2937; /* Darker gray text on hover */
-        }
-        .icon-btn {
-            color: #4B5563; /* Gray icon color */
-            padding: 0.5rem;
-            border-radius: 0.375rem; /* rounded-md */
-        }
-        .icon-btn:hover {
-            background-color: #F3F4F6; /* Lighter gray on hover */
-        }
-        .cart-section, .summary-section, .recently-viewed-section {
-            background-color: #FFFFFF; /* White background for sections */
-            border-radius: 0.75rem; /* rounded-xl */
-            padding: 1.5rem; /* p-6 */
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-lg */
-        }
-        .product-card {
-            border: 1px solid #E5E7EB; /* Light gray border */
-            border-radius: 0.5rem; /* rounded-lg */
-            overflow: hidden;
-        }
-        .quantity-selector {
-            display: flex;
-            align-items: center;
-            border: 1px solid #D1D5DB; /* Gray border */
-            border-radius: 0.375rem; /* rounded-md */
-            padding: 0.25rem 0.5rem;
-        }
-        .quantity-selector span {
-            padding: 0 0.5rem;
-        }
-        .checkout-button {
-            /* Uses .bg-svenska-blue and .hover:bg-svenska-blue-darker from above */
-            color: white;
-            font-weight: 600; /* semibold */
-            padding: 0.75rem 1.5rem; /* py-3 px-6 */
-            border-radius: 9999px; /* rounded-full */
-            text-align: center;
-            transition: background-color 0.2s ease-in-out;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
-        .chatbox {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: 100%;
-            height: 100%;
-            /* Uses .bg-chatbox-svenska-blue */
+        .chat-container {
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            color: white;
-            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
-        .chatbox-header {
-            padding: 1rem; /* p-4 */
+
+        .chat-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            /* Uses .border-chatbox-svenska-accent */
-            border-bottom-width: 1px;
+            color: white;
         }
-        .chatbox-header-title {
-            display: flex;
-            align-items: center;
-            font-weight: 500; /* medium */
-        }
-        .chatbox-body {
-            flex-grow: 1;
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
             display: flex;
             flex-direction: column;
-            justify-content: flex-end;
-            padding: 1rem; /* p-4 */
-            overflow-y: auto;
+            gap: 1rem;
         }
-        .mic-button-bg {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background-color: rgba(255, 255, 255, 0.1); /* Semi-transparent white */
+
+        .message {
+            max-width: 70%;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+
+        .user-message {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            margin-right: auto;
+        }
+
+        .assistant-message {
+            align-self: flex-end;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-left: auto;
+        }
+
+        .chat-controls {
+            padding: 1.5rem;
             display: flex;
             justify-content: center;
             align-items: center;
-            cursor: pointer;
-            margin: auto;
+            gap: 1rem;
         }
+
         .mic-button {
             width: 80px;
             height: 80px;
             border-radius: 50%;
-            background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent white */
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
             display: flex;
             justify-content: center;
             align-items: center;
             cursor: pointer;
-        }
-        .mic-active {
-            background-color: rgba(255, 51, 51, 0.4); /* Semi-transparent red */
-        }
-        .chatbox-footer {
-            padding: 1rem; /* p-4 */
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            /* Uses .border-chatbox-svenska-accent */
-            border-top-width: 1px;
-        }
-        .chat-control-btn {
-            background-color: rgba(255, 255, 255, 0.15);
-            border-radius: 50%;
-            width: 48px;
-            height: 48px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out;
-        }
-        .chat-control-btn:hover {
-            background-color: rgba(255, 255, 255, 0.25);
-        }
-        .chat-control-btn.end-call {
-            background-color: #DC2626; /* Red for end call */
-        }
-        .chat-control-btn.end-call:hover {
-            background-color: #EF4444; /* Lighter red on hover */
+            transition: all 0.3s ease;
+            color: white;
         }
 
-        /* Chat message bubbles */
-        .chat-message {
-            max-width: 80%;
-            margin-bottom: 10px;
-            padding: 10px 15px;
-            border-radius: 18px;
-            word-wrap: break-word;
-        }
-        .user-message {
-            align-self: flex-end;
-            background-color: #0051BA;
-            margin-left: auto;
-        }
-        .assistant-message {
-            align-self: flex-start;
-            background-color: rgba(255, 255, 255, 0.1);
-            margin-right: auto;
+        .mic-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
         }
 
-        /* Audio wave animation */
+        .mic-button.recording {
+            background: #ef4444;
+            border-color: #dc2626;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+
+        .status-bar {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.5rem 1rem;
+            text-align: center;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-family: monospace;
+        }
+
         .audio-wave {
             display: flex;
             align-items: center;
             justify-content: center;
+            gap: 2px;
             height: 20px;
-            margin: 10px 0;
         }
+
         .audio-wave span {
-            display: inline-block;
             width: 3px;
             height: 100%;
-            margin: 0 2px;
-            background-color: rgba(255, 255, 255, 0.7);
-            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 2px;
             animation: wave 1.2s infinite ease-in-out;
         }
+
         .audio-wave span:nth-child(2) { animation-delay: 0.1s; }
         .audio-wave span:nth-child(3) { animation-delay: 0.2s; }
         .audio-wave span:nth-child(4) { animation-delay: 0.3s; }
@@ -215,49 +134,72 @@
             20% { transform: scaleY(1); }
         }
 
-        /* Custom scrollbar for webkit browsers */
+        .close-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            color: white;
+            transition: background 0.2s;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
         ::-webkit-scrollbar {
-            width: 8px;
+            width: 6px;
         }
+
         ::-webkit-scrollbar-track {
-            background: #f1f1f1; /* Light gray track */
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
         }
+
         ::-webkit-scrollbar-thumb {
-            background: #0051BA; /* Primary Blue scrollbar thumb */
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
         }
+
         ::-webkit-scrollbar-thumb:hover {
-            background: #003A8C; /* Darker Blue on hover */
+            background: rgba(255, 255, 255, 0.5);
         }
-
     </style>
-
-
-    <div id="chatbox" class="chatbox bg-chatbox-svenska-blue">
-        <div class="chatbox-header border-chatbox-svenska-accent">
-            <div class="chatbox-header-title">
-                <span>Gemini Live Agent </span>
-            </div>
-            <button id="closeChatbox" class="p-1 rounded-full hover:bg-svenska-blue-darker">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+</head>
+<body>
+    <div class="chat-container">
+        <!-- Header -->
+        <div class="chat-header">
+            <h1 class="text-lg font-medium">Voice Assistant</h1>
+            <button id="close-btn" class="close-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12"/>
                 </svg>
             </button>
         </div>
 
-        <div id="session-id-display" class="text-xs text-center bg-opacity-80 bg-black p-2 text-gray-400 border-t border-b border-gray-700">
-            <span id="session-id-text" class="font-mono font-bold">Waiting for session...</span>
+        <!-- Status Bar -->
+        <div id="status-bar" class="status-bar">
+            <span id="session-status">Connecting...</span>
         </div>
 
-        <div class="chatbox-body" id="chat-messages">
-            <!-- Chat messages will be added here -->
-            <div class="chat-message assistant-message">
-                Hello! I'm your virtual assistant. How can I help you today?
+        <!-- Chat Messages -->
+        <div id="chat-messages" class="chat-messages">
+            <div class="message assistant-message">
+                Hello! I'm your voice assistant. Click the microphone to start talking.
             </div>
         </div>
 
-        <div id="audio-indicator" class="px-4 pb-2 flex justify-center items-center h-10 hidden">
+        <!-- Audio Indicator -->
+        <div id="audio-indicator" class="hidden" style="padding: 1rem; text-align: center;">
             <div class="audio-wave">
                 <span></span>
                 <span></span>
@@ -267,57 +209,43 @@
             </div>
         </div>
 
-        <div class="chatbox-footer border-chatbox-svenska-accent">
-            <div id="mic-button-container" class="mic-button">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+        <!-- Controls -->
+        <div class="chat-controls">
+            <button id="mic-button" class="mic-button">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                    <line x1="12" y1="19" x2="12" y2="23"/>
+                    <line x1="8" y1="23" x2="16" y2="23"/>
                 </svg>
-            </div>
+            </button>
         </div>
     </div>
 
-
-    <!-- Audio client script -->
+    <!-- Audio Client Script -->
     <script src="audio-client.js"></script>
 
     <script>
-        // Initialize audio client with deployed server URL
-        const audioClient = new AudioClient('ws://localhost:8765'); // Replace with your server URL
+        // Audio client initialization
+        const audioClient = new AudioClient('ws://localhost:8765/ws');
         let isRecording = false;
 
-        // Script to toggle chatbox visibility
-        const chatbox = document.getElementById('chatbox');
-        const closeChatboxButton = document.getElementById('closeChatbox');
-        const micButton = document.getElementById('mic-button-container');
+        // DOM elements
+        const micButton = document.getElementById('mic-button');
         const chatMessages = document.getElementById('chat-messages');
         const audioIndicator = document.getElementById('audio-indicator');
+        const sessionStatus = document.getElementById('session-status');
+        const closeBtn = document.getElementById('close-btn');
 
-        if (closeChatboxButton) {
-            closeChatboxButton.addEventListener('click', () => {
-                if (chatbox) chatbox.style.display = 'none';
-                if (openChatButton) openChatButton.style.display = 'flex';
-
-                // Stop recording if active
-                if (isRecording) {
-                    stopRecording();
-                }
-
-                // Disconnect the audio client
-                audioClient.close();
-
-                // Reset session ID display
-                const sessionIdText = document.getElementById('session-id-text');
-                const sessionIdDisplay = document.getElementById('session-id-display');
-
-                if (sessionIdText && sessionIdDisplay) {
-                    sessionIdText.textContent = 'Session disconnected';
-                    // Change color back to indicate inactive session
-                    sessionIdDisplay.classList.remove('text-yellow-300');
-                    sessionIdDisplay.classList.add('text-gray-400');
-                }
-            });
-        }
-
+        // Close button handler
+        closeBtn.addEventListener('click', () => {
+            if (isRecording) {
+                stopRecording();
+            }
+            audioClient.close();
+            sessionStatus.textContent = 'Disconnected';
+            document.body.style.display = 'none';
+        });
 
         // Microphone button handler
         micButton.addEventListener('click', () => {
@@ -328,79 +256,49 @@
             }
         });
 
-
         // Initialize audio client
         async function initializeAudioClient() {
             try {
-                // Reset session ID display while connecting
-                const sessionIdText = document.getElementById('session-id-text');
-                const sessionIdDisplay = document.getElementById('session-id-display');
-
-                if (sessionIdText && sessionIdDisplay) {
-                    sessionIdText.textContent = 'Waiting for session...';
-                    // Ensure color is gray for waiting state
-                    sessionIdDisplay.classList.remove('text-yellow-300');
-                    sessionIdDisplay.classList.add('text-gray-400');
-                }
-
+                sessionStatus.textContent = 'Connecting...';
                 await audioClient.connect();
 
-                // Variables to track the current response
+                // Response tracking
                 let currentResponseText = '';
                 let currentResponseElement = null;
 
-                // Set up event handlers
+                // Event handlers
                 audioClient.onReady = () => {
                     console.log('Audio client ready');
+                    sessionStatus.textContent = 'Connected';
                 };
 
                 audioClient.onSessionIdReceived = (sessionId) => {
-                    console.log('Session ID received in callback:', sessionId);
-                    const sessionIdText = document.getElementById('session-id-text');
-                    const sessionIdDisplay = document.getElementById('session-id-display');
-
-                    if (sessionIdText && sessionIdDisplay) {
-                        console.log('Updating session ID text with:', sessionId);
-                        // Update the text and change color to indicate active session
-                        sessionIdText.textContent = `Session ID: ${sessionId}`;
-                        sessionIdDisplay.classList.remove('text-gray-400');
-                        sessionIdDisplay.classList.add('text-yellow-300');
-                    } else {
-                        console.error('Session ID elements not found!');
-                    }
+                    console.log('Session ID:', sessionId);
+                    sessionStatus.textContent = `Session: ${sessionId.substring(0, 8)}...`;
                 };
 
                 audioClient.onAudioReceived = (audioData) => {
-                    // Show audio indicator when receiving audio
                     audioIndicator.classList.remove('hidden');
                 };
 
-                audioClient.onTextReceived = (text) => {
+                audioClient.onTextReceived = (text, sender) => {
                     if (text && text.trim()) {
-                        // If this is the first part of a response
-                        if (!currentResponseElement || !document.body.contains(currentResponseElement)) {
-                            // Create a new message and save reference
+                        if (!currentResponseElement || !document.body.contains(currentResponseElement) || currentResponseElement.dataset.sender !== sender) {
                             currentResponseText = text;
-                            currentResponseElement = document.createElement('div');
-                            currentResponseElement.className = 'chat-message assistant-message';
-                            currentResponseElement.textContent = text;
-                            chatMessages.appendChild(currentResponseElement);
+                            currentResponseElement = addMessage(text, sender);
+                            currentResponseElement.dataset.sender = sender;
                         } else {
-                            // Append to the existing response
                             currentResponseText += ' ' + text.trim();
-                            currentResponseElement.textContent = currentResponseText;
+                            currentResponseElement.innerHTML = currentResponseText.replace(/\n/g, '<br>');
                         }
-
-                        // Scroll to the bottom
-                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                        scrollToBottom();
                     }
                 };
 
-                audioClient.onTurnComplete = () => {
-                    // Hide audio indicator when done speaking
-                    audioIndicator.classList.add('hidden');
 
-                    // Reset for next response
+
+                audioClient.onTurnComplete = () => {
+                    audioIndicator.classList.add('hidden');
                     currentResponseText = '';
                     currentResponseElement = null;
                 };
@@ -408,26 +306,23 @@
                 audioClient.onError = (error) => {
                     console.error('Audio client error:', error);
                     addMessage("Sorry, I encountered an error. Please try again.", "assistant");
-
-                    // Reset response tracking
+                    sessionStatus.textContent = 'Error - Try reconnecting';
                     currentResponseText = '';
                     currentResponseElement = null;
                 };
 
                 audioClient.onInterrupted = () => {
-                    console.log('Interruption detected, stopping audio playback');
+                    console.log('Interruption detected');
                     audioIndicator.classList.add('hidden');
-
-                    // Stop audio playback immediately
                     audioClient.interrupt();
-
-                    // Reset response tracking
                     currentResponseText = '';
                     currentResponseElement = null;
                 };
+
             } catch (error) {
                 console.error('Failed to initialize audio client:', error);
-                addMessage("Sorry, I'm having trouble connecting. Please try again later.", "assistant");
+                addMessage("Connection failed. Please refresh and try again.", "assistant");
+                sessionStatus.textContent = 'Connection failed';
             }
         }
 
@@ -437,10 +332,8 @@
                 const success = await audioClient.startRecording();
                 if (success) {
                     isRecording = true;
-                    micButton.classList.add('mic-active');
-
-                    // Show user message
-                    addMessage("...", "user");
+                    micButton.classList.add('recording');
+                    addMessage("Listening...", "user");
                 }
             } catch (error) {
                 console.error('Error starting recording:', error);
@@ -451,83 +344,36 @@
         function stopRecording() {
             audioClient.stopRecording();
             isRecording = false;
-            micButton.classList.remove('mic-active');
+            micButton.classList.remove('recording');
 
-            // Remove the temporary user message
+            // Remove temporary "Listening..." message
             const tempMessages = document.querySelectorAll('.user-message');
             if (tempMessages.length > 0) {
                 const lastMessage = tempMessages[tempMessages.length - 1];
-                if (lastMessage.textContent === '...') {
+                if (lastMessage.textContent === 'Listening...') {
                     lastMessage.remove();
                 }
             }
         }
 
-        // Add a message to the chat
+        // Add message to chat
         function addMessage(text, sender) {
             const messageElement = document.createElement('div');
-            messageElement.className = `chat-message ${sender}-message`;
-            messageElement.textContent = text;
-
+            messageElement.className = `message ${sender}-message`;
+            messageElement.innerHTML = text.replace(/\n/g, '<br>');
             chatMessages.appendChild(messageElement);
-
-            // Scroll to the bottom
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            scrollToBottom();
+            return messageElement;
         }
 
-        // Basic quantity adjustment
-        document.querySelectorAll('.quantity-selector').forEach(selector => {
-            const minusButton = selector.querySelector('button:first-child');
-            const plusButton = selector.querySelector('button:last-child');
-            const input = selector.querySelector('input[type="text"]');
-
-            minusButton.addEventListener('click', () => {
-                let value = parseInt(input.value);
-                if (value > 1) {
-                    input.value = value - 1;
-                    // Note: For a real cart, you'd call a function here to update totals
-                }
-            });
-
-            plusButton.addEventListener('click', () => {
-                let value = parseInt(input.value);
-                input.value = value + 1;
-                // Note: For a real cart, you'd call a function here to update totals
-            });
-        });
-
-        // Simple function to update totals (example - would be more complex in a real app)
-        // This is illustrative; in a real app, this would be triggered by quantity changes and promo codes.
-        function updateOrderSummary() {
-            const product1Price = 49.99;
-            const product1Qty = parseInt(document.getElementById('quantity1').value) || 0;
-            const product2Price = 9.99; // Candle price
-            const product2Qty = parseInt(document.getElementById('quantity2').value) || 0;
-
-            const subtotal = (product1Price * product1Qty) + (product2Price * product2Qty);
-            const taxRate = 0.08; // Example 8% tax
-            const tax = subtotal * taxRate;
-            const total = subtotal + tax;
-
-            document.getElementById('subtotalAmount').textContent = `$${subtotal.toFixed(2)}`;
-            document.getElementById('taxAmount').textContent = `$${tax.toFixed(2)}`;
-            document.getElementById('totalAmount').textContent = `$${total.toFixed(2)}`;
+        // Scroll to bottom
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
         // Initialize on page load
         window.addEventListener('load', () => {
             initializeAudioClient();
-
-            // Initialize order summary with correct values
-            updateOrderSummary();
-
-            // Add event listeners to quantity buttons to update totals
-            document.querySelectorAll('.quantity-selector button').forEach(button => {
-                button.addEventListener('click', () => {
-                    // A brief delay to allow input value to update visually, then recalculate
-                    setTimeout(updateOrderSummary, 50);
-                });
-            });
         });
     </script>
 </body>

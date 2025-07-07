@@ -1,0 +1,223 @@
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8f9fa; /* Light gray background for the page */
+}
+.bg-svenska-blue { background-color: #0051BA; } /* Primary Blue */
+.text-svenska-blue { color: #0051BA; }
+.border-svenska-blue { border-color: #0051BA; }
+.hover\:bg-svenska-blue-darker:hover { background-color: #003A8C; } /* Darker shade for hover */
+.focus\:ring-svenska-blue:focus { --tw-ring-color: #0051BA; }
+.focus\:border-svenska-blue:focus { border-color: #0051BA; }
+
+.bg-svenska-yellow { background-color: #FFDA1A; } /* Primary Yellow */
+.text-svenska-yellow { color: #FFDA1A; }
+.border-svenska-yellow { border-color: #FFDA1A; }
+.hover\:bg-svenska-yellow-darker:hover { background-color: #FBCB0A; } /* Darker shade for hover */
+
+/* Chatbox specific dark blue */
+.bg-chatbox-svenska-blue { background-color: #002F6C; } /* A darker variant of the blue for chatbox */
+.border-chatbox-svenska-accent { border-color: #0051BA; } /* Primary blue for chatbox accents */
+
+
+.top-bar {
+    background-color: #FFFFFF; /* White top bar */
+    border-bottom: 1px solid #E5E7EB; /* Light gray border */
+}
+.nav-link {
+    color: #4B5563; /* Gray text for nav links */
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem; /* rounded-md */
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+.nav-link:hover {
+    background-color: #F3F4F6; /* Lighter gray on hover */
+    color: #1F2937; /* Darker gray text on hover */
+}
+.icon-btn {
+    color: #4B5563; /* Gray icon color */
+    padding: 0.5rem;
+    border-radius: 0.375rem; /* rounded-md */
+}
+.icon-btn:hover {
+    background-color: #F3F4F6; /* Lighter gray on hover */
+}
+.cart-section, .summary-section, .recently-viewed-section {
+    background-color: #FFFFFF; /* White background for sections */
+    border-radius: 0.75rem; /* rounded-xl */
+    padding: 1.5rem; /* p-6 */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-lg */
+}
+.product-card {
+    border: 1px solid #E5E7EB; /* Light gray border */
+    border-radius: 0.5rem; /* rounded-lg */
+    overflow: hidden;
+}
+.quantity-selector {
+    display: flex;
+    align-items: center;
+    border: 1px solid #D1D5DB; /* Gray border */
+    border-radius: 0.375rem; /* rounded-md */
+    padding: 0.25rem 0.5rem;
+}
+.quantity-selector span {
+    padding: 0 0.5rem;
+}
+.checkout-button {
+    /* Uses .bg-svenska-blue and .hover:bg-svenska-blue-darker from above */
+    color: white;
+    font-weight: 600; /* semibold */
+    padding: 0.75rem 1.5rem; /* py-3 px-6 */
+    border-radius: 9999px; /* rounded-full */
+    text-align: center;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.chatbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    /* Uses .bg-chatbox-svenska-blue */
+    display: flex;
+    flex-direction: column;
+    color: white;
+    overflow: hidden;
+}
+.chatbox-header {
+    padding: 1rem; /* p-4 */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* Uses .border-chatbox-svenska-accent */
+    border-bottom-width: 1px;
+}
+.chatbox-header-title {
+    display: flex;
+    align-items: center;
+    font-weight: 500; /* medium */
+}
+.chatbox-body {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 1rem; /* p-4 */
+    overflow-y: auto;
+}
+.mic-button-bg {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.1); /* Semi-transparent white */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    margin: auto;
+}
+.mic-button {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent white */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+.mic-active {
+    background-color: rgba(255, 51, 51, 0.4); /* Semi-transparent red */
+}
+.chatbox-footer {
+    padding: 1rem; /* p-4 */
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    /* Uses .border-chatbox-svenska-accent */
+    border-top-width: 1px;
+}
+.chat-control-btn {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+.chat-control-btn:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+.chat-control-btn.end-call {
+    background-color: #DC2626; /* Red for end call */
+}
+.chat-control-btn.end-call:hover {
+    background-color: #EF4444; /* Lighter red on hover */
+}
+
+/* Chat message bubbles */
+.chat-message {
+    max-width: 80%;
+    margin-bottom: 10px;
+    padding: 10px 15px;
+    border-radius: 18px;
+    word-wrap: break-word;
+}
+.user-message {
+    align-self: flex-start;
+    background-color: #0051BA;
+    margin-right: auto;
+}
+.assistant-message {
+    align-self: flex-end;
+    background-color: rgba(255, 255, 255, 0.1);
+    margin-left: auto;
+}
+
+/* Audio wave animation */
+.audio-wave {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 20px;
+    margin: 10px 0;
+}
+.audio-wave span {
+    display: inline-block;
+    width: 3px;
+    height: 100%;
+    margin: 0 2px;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 3px;
+    animation: wave 1.2s infinite ease-in-out;
+}
+.audio-wave span:nth-child(2) { animation-delay: 0.1s; }
+.audio-wave span:nth-child(3) { animation-delay: 0.2s; }
+.audio-wave span:nth-child(4) { animation-delay: 0.3s; }
+.audio-wave span:nth-child(5) { animation-delay: 0.4s; }
+
+@keyframes wave {
+    0%, 40%, 100% { transform: scaleY(0.4); }
+    20% { transform: scaleY(1); }
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f1f1; /* Light gray track */
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+    background: #0051BA; /* Primary Blue scrollbar thumb */
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #003A8C; /* Darker Blue on hover */
+}

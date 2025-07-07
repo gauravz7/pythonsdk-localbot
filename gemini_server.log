@@ -1,0 +1,7 @@
+2025-07-07 14:01:38,085 - __main__ - INFO - ✅ Gemini client initialized
+2025-07-07 14:01:38,086 - __main__ - INFO - 🎯 Starting Gemini Live API Server...
+2025-07-07 14:01:38,099 - __main__ - INFO - 🚀 Starting Gemini Live API Server
+2025-07-07 14:01:38,099 - __main__ - INFO -    🎤 Model: gemini-live-2.5-flash
+2025-07-07 14:01:38,099 - __main__ - INFO -    🔗 WebSocket: ws://0.0.0.0:8765/ws
+2025-07-07 14:01:38,099 - __main__ - INFO -    🤖 Gemini Available: True
+2025-07-07 14:05:24,775 - __main__ - INFO - 🛑 Shutting down server
